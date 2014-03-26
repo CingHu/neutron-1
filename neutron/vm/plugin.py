@@ -28,12 +28,14 @@ from oslo.config import cfg
 from neutron.api.v2 import attributes
 from neutron.common import driver_manager
 from neutron.common import topics
+from neutron.db.vm import proxy_db  # noqa
 from neutron.db.vm import vm_db
 from neutron.extensions import servicevm
 from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants
 from neutron.vm.mgmt_drivers import constants as mgmt_constants
+from neutron.vm import proxy_api
 
 LOG = logging.getLogger(__name__)
 
@@ -166,6 +168,7 @@ class ServiceVMPlugin(vm_db.ServiceResourcePluginDb, ServiceVMMgmtMixin):
         self._device_manager = driver_manager.DriverManager(
             'neutron.servicevm.device.drivers',
             cfg.CONF.servicevm.device_driver)
+        self.proxy_api = proxy_api.ServiceVMPluginApi(topics.SERVICEVM_AGENT)
 
     def spawn_n(self, function, *args, **kwargs):
         self._pool.spawn_n(function, *args, **kwargs)
