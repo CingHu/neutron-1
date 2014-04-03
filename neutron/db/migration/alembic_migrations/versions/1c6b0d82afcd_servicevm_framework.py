@@ -75,37 +75,12 @@ def upgrade(active_plugins=None, options=None):
         sa.PrimaryKeyConstraint('id'),
     )
     op.create_table(
-        'serviceinstances',
-        sa.Column('id', sa.String(length=36), nullable=False),
-        sa.Column('tenant_id', sa.String(length=255), nullable=True),
-        sa.Column('name', sa.String(length=255), nullable=True),
-        sa.Column('service_type_id', sa.String(length=36), nullable=True),
-        sa.Column('service_table_id', sa.String(length=36), nullable=True),
-        sa.Column('status', sa.String(length=255), nullable=True),
-        sa.Column('mgmt_driver', sa.String(length=255), nullable=True),
-        sa.Column('mgmt_address', sa.String(length=255), nullable=True),
-        sa.ForeignKeyConstraint(['service_type_id'], ['servicetypes.id'], ),
-        sa.PrimaryKeyConstraint('id'),
-    )
-    op.create_table(
-        'servicecontexts',
-        sa.Column('id', sa.String(length=36), nullable=False),
-        sa.Column('service_instance_id', sa.String(length=36)),
-        sa.Column('network_id', sa.String(length=36), nullable=True),
-        sa.Column('subnet_id', sa.String(length=36), nullable=True),
-        sa.Column('port_id', sa.String(length=36), nullable=True),
-        sa.Column('router_id', sa.String(length=36), nullable=True),
-        sa.Column('role', sa.String(length=256), nullable=True),
-        sa.Column('index', sa.Integer(), nullable=True),
-        sa.PrimaryKeyConstraint('id'),
-    )
-    op.create_table(
         'devices',
         sa.Column('id', sa.String(length=36), nullable=False),
         sa.Column('tenant_id', sa.String(length=255), nullable=True),
+        sa.Column('template_id', sa.String(length=36), nullable=True),
         sa.Column('instance_id', sa.String(length=255), nullable=True),
         sa.Column('mgmt_address', sa.String(length=255), nullable=True),
-        sa.Column('template_id', sa.String(length=36), nullable=True),
         sa.Column('status', sa.String(length=255), nullable=True),
         sa.ForeignKeyConstraint(['template_id'], ['devicetemplates.id'], ),
         sa.PrimaryKeyConstraint('id'),
@@ -132,6 +107,32 @@ def upgrade(active_plugins=None, options=None):
         sa.PrimaryKeyConstraint('id'),
     )
     op.create_table(
+        'serviceinstances',
+        sa.Column('id', sa.String(length=36), nullable=False),
+        sa.Column('tenant_id', sa.String(length=255), nullable=True),
+        sa.Column('name', sa.String(length=255), nullable=True),
+        sa.Column('service_type_id', sa.String(length=36), nullable=True),
+        sa.Column('service_table_id', sa.String(length=36), nullable=True),
+        sa.Column('managed_by_user', sa.Boolean(), nullable=False),
+        sa.Column('mgmt_driver', sa.String(length=255), nullable=True),
+        sa.Column('mgmt_address', sa.String(length=255), nullable=True),
+        sa.Column('status', sa.String(length=255), nullable=True),
+        sa.ForeignKeyConstraint(['service_type_id'], ['servicetypes.id'], ),
+        sa.PrimaryKeyConstraint('id'),
+    )
+    op.create_table(
+        'servicecontexts',
+        sa.Column('id', sa.String(length=36), nullable=False),
+        sa.Column('service_instance_id', sa.String(length=36)),
+        sa.Column('network_id', sa.String(length=36), nullable=True),
+        sa.Column('subnet_id', sa.String(length=36), nullable=True),
+        sa.Column('port_id', sa.String(length=36), nullable=True),
+        sa.Column('router_id', sa.String(length=36), nullable=True),
+        sa.Column('role', sa.String(length=256), nullable=True),
+        sa.Column('index', sa.Integer(), nullable=True),
+        sa.PrimaryKeyConstraint('id'),
+    )
+    op.create_table(
         'servicedevicebindings',
         sa.Column('id', sa.String(length=36), nullable=False),
         sa.Column('service_instance_id', sa.String(length=36), nullable=True),
@@ -147,9 +148,12 @@ def downgrade(active_plugins=None, options=None):
     if not migration.should_run(active_plugins, migration_for_plugins):
         return
 
-    op.drop_table('device_templates')
-    op.drop_table('service_types')
-    op.drop_table('device_template_attributes')
-    op.drop_table('service_instances')
+    op.drop_table('devicetemplates')
+    op.drop_table('servicetypes')
+    op.drop_table('devicetemplateattributes')
     op.drop_table('devices')
-    op.drop_table('service_device_bindings')
+    op.drop_table('deviceargs')
+    op.drop_table('deviceservicecontexts')
+    op.drop_table('serviceinstances')
+    op.drop_table('servicecontexts')
+    op.drop_table('servicedevicebindings')
