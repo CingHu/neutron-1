@@ -544,9 +544,10 @@ class ServiceVMPlugin(vm_db.ServiceResourcePluginDb, ServiceVMMgmtMixin):
     # for service drivers. e.g. hosting_driver of loadbalancer
     def _update_service_table_instance(
             self, context, service_table_id, mgmt_kwargs, callback, errorback):
-
         _device_dict, service_instance_dict = self.get_by_service_table_id(
             context, service_table_id)
+        service_instance_dict = self._update_service_instance_pre(
+            context, service_instance_dict['id'], {})
         self.spawn_n(self._update_service_instance_wait, context,
                      service_instance_dict, mgmt_kwargs, callback, errorback)
 
