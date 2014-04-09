@@ -67,7 +67,7 @@ class TestNamespaceAgent(base.BaseTestCase):
             dst_target = target.target_parse(dst_target)
             mock_get_proxy_server.assert_called_once_with(
                 self.mock_transport, src_unix_target, None,
-                self.mock_transport, dst_target, None, executer=mock.ANY)
+                self.mock_transport, dst_target, None, executor=mock.ANY)
             mock_proxy_server.start.assert_called_once_with()
 
             self.agent.destroy_rpc_namespace_proxy(ns_proxy_id)
@@ -92,7 +92,7 @@ class TestNamespaceAgent(base.BaseTestCase):
             dst_target = target.target_parse(dst_target)
             mock_get_proxy_server.assert_called_once_with(
                 self.mock_transport, dst_target, None,
-                self.mock_transport, src_unix_target, None, executer=mock.ANY)
+                self.mock_transport, src_unix_target, None, executor=mock.ANY)
             mock_proxy_server.start.assert_called_once_with()
 
             self.agent.destroy_rpc_namespace_proxy(ns_proxy_id)
@@ -119,7 +119,7 @@ class TestNamespaceAgent(base.BaseTestCase):
             dst_target_send = target.target_parse(dst_target_send)
             mock_get_proxy_server.assert_called_once_with(
                 self.mock_transport, src_unix_target_send, None,
-                self.mock_transport, dst_target_send, None, executer=mock.ANY)
+                self.mock_transport, dst_target_send, None, executor=mock.ANY)
             mock_proxy_server.start.assert_called_once_with()
 
             src_unix_target_recv = ('topic=src_topic_recv,'
@@ -138,12 +138,12 @@ class TestNamespaceAgent(base.BaseTestCase):
             mock_get_proxy_server.assert_has_calls([
                 mock.call(self.mock_transport, src_unix_target_send, None,
                           self.mock_transport, dst_target_send, None,
-                          executer=mock.ANY),
+                          executor=mock.ANY),
                 mock.call().start(),
                 call_hash(),
                 mock.call(self.mock_transport, dst_target_recv, None,
                           self.mock_transport, src_unix_target_recv, None,
-                          executer=mock.ANY),
+                          executor=mock.ANY),
                 mock.call().start(),
                 call_hash()])
 
