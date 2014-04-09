@@ -110,7 +110,7 @@ class TestMgmtProxyDriver(test_rpc.TestMgmtRpcDriver):
 
         mgmt_driver.mgmt_call(self.plugin, self._CONTEXT, self._DEVICE,
                               self._KWARGS)
-        msg = {'args': {'payload': self._KWARGS['kwargs']},
+        msg = {'args': self._KWARGS['kwargs'],
                'namespace': None,
                'method': 'action-name'}
         self.mock_rpc_proxy_cast.assert_called_once_with(
@@ -170,7 +170,7 @@ class TestMgmtProxyDriver(test_rpc.TestMgmtRpcDriver):
         mgmt_driver.mgmt_service_call(
             self.plugin, self._CONTEXT, self._DEVICE, self._SERVICE_INSTANCE,
             self._KWARGS)
-        msg = {'args': {'payload': self._KWARGS['kwargs']},
+        msg = {'args': self._KWARGS['kwargs'],
                'namespace': None,
                'method': 'action-name'}
         self.mock_rpc_proxy_cast.assert_called_once_with(
