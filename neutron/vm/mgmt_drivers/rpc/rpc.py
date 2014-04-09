@@ -31,8 +31,8 @@ class ServiceVMAgentRpcApi(proxy.RpcProxy):
         super(ServiceVMAgentRpcApi, self).__init__(
             topic=topic, default_version=self.BASE_RPC_API_VERSION)
 
-    def rpc_cast(self, context, method, payload, topic):
-        self.cast(context, self.make_msg(method, payload=payload), topic=topic)
+    def rpc_cast(self, context, method, kwargs, topic):
+        self.cast(context, self.make_msg(method, **kwargs), topic=topic)
 
 
 # TODO(yamahata): port this to oslo.messaging
