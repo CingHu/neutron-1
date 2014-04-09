@@ -450,7 +450,7 @@ class ServiceResourcePluginDb(servicevm.ServiceVMPluginBase,
                 context.session.add(service_type_db)
 
         LOG.debug(_('template_db %(template_db)s %(attributes)s '
-                    '%(service_teyps)s'),
+                    '%(service_types)s'),
                   {'template_db': template_db,
                    'attributes': template_db.attributes,
                    'service_types': template_db.service_types})
