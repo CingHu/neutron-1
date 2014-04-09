@@ -494,16 +494,25 @@ class ServiceResourcePluginDb(servicevm.ServiceVMPluginBase,
 
     # called internally, not by REST API
     # need enhancement?
-    def choose_device_template(self, context, service_type):
+    def choose_device_template(self, context, service_type,
+                               required_attributes=None):
+        required_attributes = required_attributes or []
         with context.session.begin(subtransactions=True):
-            template_db = (
+            query = (
                 context.session.query(DeviceTemplate).
                 filter(
                     sa.exists().
                     where(sa.and_(
                         DeviceTemplate.id == ServiceType.template_id,
-                        ServiceType.service_type == service_type))).
-                first())
+                        ServiceType.service_type == service_type))))
+            for key in required_attributes:
+                query = query.filter(
+                    sa.exists().
+                    where(sa.and_(
+                        DeviceTemplate.id ==
+                        DeviceTemplateAttribute.tempalte_id,
+                        DeviceTemplateAttribute.key == key)))
+            template_db = query.first()
             if template_db:
                 return self._make_template_dict(template_db)
 
