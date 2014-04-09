@@ -149,6 +149,27 @@ class ServiceVMAgent(manager.Manager):
         if self._src_transport is not None:
             self._src_transport.cleanup()
 
+    def create_device(self, device):
+        LOG.debug(_('create_device %s'), device)
+
+    def update_device(self, device):
+        LOG.debug(_('update_device %s'), device)
+
+    def delete_device(self, device):
+        LOG.debug(_('delete_device %s'), device)
+
+    def create_service(self, device, service_instance):
+        LOG.debug(_('create_service %(device)s %(service_instance)s'),
+                  device, service_instance)
+
+    def update_service(self, device, service_instance):
+        LOG.debug(_('update_service %(device)s %(service_instance)s'),
+                  device, service_instance)
+
+    def delete_service(self, device, service_instance):
+        LOG.debug(_('delete_service %(device)s %(service_instance)s'),
+                  device, service_instance)
+
     # TODO(yamahata): copied from loadbalancer/drivers/haproxy/namespace_driver
     #                 consolidate it.
     def _plug(self, port_config):
