@@ -28,6 +28,7 @@ SVC_TYPE_LOADBALANCER = 'loadbalancer'
 ## for nova driver. novaclient library uses those
 ATTR_KEY_IMAGE = 'image'
 ATTR_KEY_FLAVOR = 'flavor'
+ATTR_KEY_MGMT_NETWORK = 'mgmt-network'
 
 
 # Role of service context
