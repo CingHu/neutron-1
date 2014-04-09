@@ -243,7 +243,7 @@ class ServiceVMPlugin(vm_db.ServiceResourcePluginDb, ServiceVMMgmtMixin):
             return
 
         kwargs = {
-            mgmt_constants.KEY_ACTION: mgmt_constants.ACTION_CREATE,
+            mgmt_constants.KEY_ACTION: mgmt_constants.ACTION_CREATE_DEVICE,
             mgmt_constants.KEY_KWARGS: {'device': device_dict},
         }
         new_status = constants.ACTIVE
@@ -302,7 +302,7 @@ class ServiceVMPlugin(vm_db.ServiceResourcePluginDb, ServiceVMMgmtMixin):
         driver_name = self._device_driver_name(device_dict)
         instance_id = self._instance_id(device_dict)
         kwargs = {
-            mgmt_constants.KEY_ACTION: mgmt_constants.ACTION_UPDATE,
+            mgmt_constants.KEY_ACTION: mgmt_constants.ACTION_UPDATE_DEVICE,
             mgmt_constants.KEY_KWARGS: {'device': device_dict},
         }
         new_status = constants.ACTIVE
@@ -357,7 +357,7 @@ class ServiceVMPlugin(vm_db.ServiceResourcePluginDb, ServiceVMMgmtMixin):
         instance_id = self._instance_id(device_dict)
 
         kwargs = {
-            mgmt_constants.KEY_ACTION: mgmt_constants.ACTION_DELETE,
+            mgmt_constants.KEY_ACTION: mgmt_constants.ACTION_DELETE_DEVICE,
             mgmt_constants.KEY_KWARGS: {'device': device_dict},
         }
         try:
