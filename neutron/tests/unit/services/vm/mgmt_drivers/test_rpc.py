@@ -67,7 +67,7 @@ class TestMgmtRpcDriver(base.BaseTestCase):
                                    self._DEVICE, self._KWARGS)
         self.mock_rpc_proxy_cast.assert_called_once_with(
             self._CONTEXT,
-            {'args': {'payload': {'action': 'method-name'}},
+            {'args': {'action': 'method-name'},
              'namespace': None,
              'method': 'action-name'},
             topic='device-address')
@@ -78,7 +78,7 @@ class TestMgmtRpcDriver(base.BaseTestCase):
             self._KWARGS)
         self.mock_rpc_proxy_cast.assert_called_once_with(
             self._CONTEXT,
-            {'args': {'payload': {'action': 'method-name'}},
+            {'args': {'action': 'method-name'},
              'namespace': None,
              'method': 'action-name'},
             topic='service-instance-address')
