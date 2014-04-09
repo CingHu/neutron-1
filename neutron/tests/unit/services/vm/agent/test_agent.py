@@ -24,6 +24,7 @@ import mock
 from oslo.config import cfg
 import oslo.messaging.rpc.client
 from oslo.messaging import target
+from oslo.messaging import transport
 
 import neutron.agent.linux.ip_lib
 from neutron.tests import base
@@ -54,8 +55,16 @@ class TestVMService(base.BaseTestCase):
 
     def setUp(self):
         super(TestVMService, self).setUp()
-        cfg.CONF.set_override('rpc_backend',
-                              'neutron.openstack.common.rpc.impl_fake')
+        conf = cfg.CONF
+
+        # NOTE(yamahata): work around. rpc driver-dependent config variables
+        # remove this line once neutron are fully ported to oslo.messaging
+        from neutron.openstack.common import rpc
+        conf.unregister_opts(rpc.rpc_opts)
+
+        conf.register_opts(transport._transport_opts)
+        conf.set_override('rpc_backend',
+                          'neutron.openstack.common.rpc.impl_fake')
         self.addCleanup(mock.patch.stopall)
         self.mock_get_transport_p = mock.patch('oslo.messaging.get_transport')
         self.mock_get_transport = self.mock_get_transport_p.start()
@@ -66,7 +75,7 @@ class TestVMService(base.BaseTestCase):
             neutron.agent.linux.interface.NullDriver)
         self.mock_import_object.return_value = self.vif_driver
 
-        self.agent = agent.ServiceVMAgent('host')
+        self.agent = agent.ServiceVMAgent('host', conf=conf)
 
         self.mock_process_manager_p = mock.patch.object(
             neutron.agent.linux.external_process, 'ProcessManager')
