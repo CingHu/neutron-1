@@ -113,7 +113,8 @@ class HostingDevicePluginDriver(abstract_driver.LoadBalancerAbstractDriver):
     # TODO(yamahata): add extension to specify template_id and/or kwargs
     def _boot_device(self, context, vip):
         template_dict = self._device_plugin.choose_device_template(
-            context, constants.LOADBALANCER, [vm_constants.MGMT_NETWORK])
+            context, constants.LOADBALANCER,
+            [vm_constants.ATTR_KEY_MGMT_NETWORK])
         if not template_dict:
             raise exceptions.NotFound()
 
@@ -128,7 +129,7 @@ class HostingDevicePluginDriver(abstract_driver.LoadBalancerAbstractDriver):
         pool_network_id = self._device_plugin.subnet_id_to_network_id(
             context, pool_subnet_id)
         mgmt_network_id = template_dict[
-            'attributes'][vm_constants.MGMT_NETWORK]
+            'attributes'][vm_constants.ATTR_KEY_MGMT_NETWORK]
         service_context = (
             vm_db.ServiceContextEntry.create(
                 network_id, subnet_id, port_id, None,
