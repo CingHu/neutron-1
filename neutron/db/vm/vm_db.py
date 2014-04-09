@@ -510,7 +510,7 @@ class ServiceResourcePluginDb(servicevm.ServiceVMPluginBase,
                     sa.exists().
                     where(sa.and_(
                         DeviceTemplate.id ==
-                        DeviceTemplateAttribute.tempalte_id,
+                        DeviceTemplateAttribute.template_id,
                         DeviceTemplateAttribute.key == key)))
             template_db = query.first()
             if template_db:
