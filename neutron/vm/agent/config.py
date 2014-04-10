@@ -24,7 +24,7 @@ from oslo.config import cfg
 
 
 OPTS = [
-    cfg.StrOpt('svcvm_proxy_dir',
+    cfg.StrOpt('svcvm-proxy-dir',
                default='$state_path/svcvm_proxy_dir',
                help=_('Location for servicevm agent proxy '
                       'UNIX domain socket')),
