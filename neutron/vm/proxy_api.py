@@ -49,7 +49,8 @@ class ServiceVMPluginApi(proxy.RpcProxy):
             'mac_address': attributes.ATTR_NOT_SPECIFIED,
             'admin_state_up': True,
             'device_id': '_svcvm-rpc-proxy-' + network_id,
-            'device_owner': 'neutron:' + constants.SERVICEVM
+            'device_owner': 'neutron:' + constants.SERVICEVM,
+            'fixed_ips': attributes.ATTR_NOT_SPECIFIED,
         }
         port = core_plugin.create_port(context, {'port': port_data})
         for i in xrange(len(port['fixed_ips'])):
