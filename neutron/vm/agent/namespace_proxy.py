@@ -89,6 +89,8 @@ class NamespaceProxies(object):
 
 class ServiceVMNamespaceAgent(manager.Manager):
     def __init__(self, host=None, **kwargs):
+        LOG.debug(_('host %(host)s, kwargs %(kwargs)s'),
+                  {'host': host, 'kwargs': kwargs})
         super(ServiceVMNamespaceAgent, self).__init__(host=host)
 
         for key in ('conf', 'src_transport', 'server_stop', ):
@@ -99,12 +101,14 @@ class ServiceVMNamespaceAgent(manager.Manager):
         self._proxies = NamespaceProxies()
 
     def stop(self):
+        LOG.debug('stop')
         self.server_stop()
         ns_proxies = self._proxies
         for _transport, proxy_server in ns_proxies.proxies.values():
             proxy_server.stop()
 
     def wait(self):
+        LOG.debug('wait')
         ns_proxies = self._proxies
         for _transport, proxy_server in ns_proxies.proxies.values():
             proxy_server.wait()
@@ -184,7 +188,7 @@ class Service(service.Service):
 
     def start(self):
         self.manager.init_host()
-        LOG.debug(_("Creating RPC server for service %s") % self.topic)
+        LOG.debug(_("Creating RPC server for service %s"), self.topic)
 
         target = messaging.Target(topic=self.topic, server=self.host)
         endpoints = [self.manager]
@@ -202,11 +206,11 @@ class Service(service.Service):
                 self.periodic_tasks, initial_delay=initial_delay,
                 periodic_interval_max=self.periodic_interval_max)
         self.manager.after_start()
+        LOG.debug('start done')
 
     @classmethod
     def create(cls, conf, src_transport,
-               host=None, binary=None, topic=None, manager_=None,
-               **kwargs):
+               host=None, binary=None, topic=None, manager_=None, **kwargs):
         if not host:
             host = conf.host
         if not binary:
@@ -239,7 +243,7 @@ class Service(service.Service):
         except Exception:
             LOG.exception(_('failed to wait rpcserver'))
 
-        super(Service, self).stop()
+        super(Service, self).wait()
 
     def periodic_tasks(self, raise_on_error=False):
         """Tasks to be run at a periodic interval."""
@@ -284,8 +288,9 @@ def main():
     legacy.modernize_quantum_config(conf)
     utils.log_opt_values(LOG)
 
-    def server_stop(self):
+    def server_stop():
         server.stop()
+    LOG.debug(_('src transport url %s'), conf.src_transport_url)
     src_transport = messaging.get_transport(
         conf, conf.src_transport_url, aliases=oslo_service.TRANSPORT_ALIASES)
     server = Service.create(
