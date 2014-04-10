@@ -44,6 +44,7 @@ from neutron.openstack.common import log as logging
 from neutron.openstack.common import service
 from neutron import oslo_service
 from neutron.services.loadbalancer.drivers.haproxy import namespace_driver
+from neutron.vm.agent import config as vm_config
 from neutron.vm.agent import target
 
 
@@ -149,24 +150,24 @@ class ServiceVMAgent(manager.Manager):
         if self._src_transport is not None:
             self._src_transport.cleanup()
 
-    def create_device(self, device):
+    def create_device(self, context, device):
         LOG.debug(_('create_device %s'), device)
 
-    def update_device(self, device):
+    def update_device(self, context, device):
         LOG.debug(_('update_device %s'), device)
 
-    def delete_device(self, device):
+    def delete_device(self, context, device):
         LOG.debug(_('delete_device %s'), device)
 
-    def create_service(self, device, service_instance):
+    def create_service(self, context, device, service_instance):
         LOG.debug(_('create_service %(device)s %(service_instance)s'),
                   device, service_instance)
 
-    def update_service(self, device, service_instance):
+    def update_service(self, context, device, service_instance):
         LOG.debug(_('update_service %(device)s %(service_instance)s'),
                   device, service_instance)
 
-    def delete_service(self, device, service_instance):
+    def delete_service(self, context, device, service_instance):
         LOG.debug(_('delete_service %(device)s %(service_instance)s'),
                   device, service_instance)
 
@@ -206,7 +207,7 @@ class ServiceVMAgent(manager.Manager):
         vif_driver.unplug(interface_name, namespace=namespace)
 
     @lockutils.synchronized('servicevm-agent', 'neutron-')
-    def create_namespace_agent(self, port):
+    def create_namespace_agent(self, context, port):
         conf = self.conf
         port_id = port['id']
         path = 'rpc-proxy-%s' % port_id
@@ -220,7 +221,8 @@ class ServiceVMAgent(manager.Manager):
 
         def cmd_callback(pid_file_name):
             cmd = ['neutron-servicevm-ns-rpc-proxy',
-                   '--src-transport', 'punix:///%s' % path]
+                   '--svcvm-proxy-dir=%s' % conf.svcvm_proxy_dir,
+                   '--src-transport-url', 'punix:///%s' % path]
             return cmd
         pm.enable(cmd_callback)
 
@@ -228,7 +230,7 @@ class ServiceVMAgent(manager.Manager):
         self._proxy_agents[port_id] = ns_agent
 
     @lockutils.synchronized('servicevm-agent', 'neutron-')
-    def destroy_namespace_agent(self, port_id):
+    def destroy_namespace_agent(self, context, port_id):
         ns_agent = self._proxy_agents.pop(port_id)
         ns_agent.api.destroy_namespace_agent()
         for proxy_server in ns_agent.local_proxies.values():
@@ -259,7 +261,7 @@ class ServiceVMAgent(manager.Manager):
         return ns_agent
 
     @lockutils.synchronized('servicevm-agent', 'neutron-')
-    def create_rpc_proxy(self, port_id,
+    def create_rpc_proxy(self, context, port_id,
                          src_target, dst_unix_target, direction):
         ns_agent = self._get_proxy_agent(port_id)
         if direction == 'send':
@@ -276,21 +278,22 @@ class ServiceVMAgent(manager.Manager):
             raise RuntimeError(msg)
 
     @lockutils.synchronized('servicevm-agent', 'neutron-')
-    def destroy_rpc_proxy(self, port_id, rpc_proxy_id):
+    def destroy_rpc_proxy(self, context, port_id, rpc_proxy_id):
         ns_agent = self._get_proxy_agent(port_id)
         proxy_server = ns_agent.local_proxies.pop(rpc_proxy_id)
         proxy_server.stop()
         proxy_server.wait()
 
     @lockutils.synchronized('servicevm-agent', 'neutron-')
-    def create_rpc_namespace_proxy(self, port_id, src_unix_target, dst_target,
-                                   direction):
+    def create_rpc_namespace_proxy(self, context, port_id, src_unix_target,
+                                   dst_target, direction):
         ns_agent = self._get_proxy_agent(port_id)
         return ns_agent.api.create_rpc_namespace_proxy(
             src_unix_target, dst_target, direction)
 
     @lockutils.synchronized('servicevm-agent', 'neutron-')
-    def destroy_rpc_namespace_proxy(self, port_id, namespace_proxy_id):
+    def destroy_rpc_namespace_proxy(self, context,
+                                    port_id, namespace_proxy_id):
         ns_agent = self._get_proxy_agent(port_id)
         return ns_agent.api.destroy_rpc_namespace_proxy(namespace_proxy_id)
 
@@ -305,6 +308,11 @@ def _register_options(conf):
     agent_config.register_interface_driver_opts_helper(conf)
     agent_config.register_agent_state_opts_helper(conf)
     agent_config.register_root_helper(conf)
+
+    # NOTE(yamahata): workaround for state_path
+    #                 oslo.messaging doesn't know state_path
+    conf.register_opts(vm_config.OPTS)
+    conf.set_override('rpc_unix_ipc_dir', conf.svcvm_proxy_dir)
 
 
 def main():
