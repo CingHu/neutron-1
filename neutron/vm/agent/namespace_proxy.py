@@ -28,6 +28,7 @@ import uuid
 import eventlet
 from oslo.config import cfg
 from oslo import messaging
+from oslo.messaging._drivers import impl_unix
 from oslo.messaging import proxy
 from oslo.messaging import rpc
 
@@ -43,6 +44,7 @@ from neutron.openstack.common import lockutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import service
 from neutron import oslo_service
+from neutron.vm.agent import config as vm_config
 from neutron.vm.agent import target
 
 
@@ -252,9 +254,15 @@ def _register_options(conf):
     cli_opts = [
         cfg.StrOpt('src-transport-url', help='src transport url'),
     ]
-    conf.register_opts(cli_opts)
+    conf.register_cli_opts(cli_opts)
     agent_config.register_agent_state_opts_helper(conf)
     agent_config.register_root_helper(conf)
+
+    # NOTE(yamahata): workaround for state_path
+    #                 oslo.messaging doesn't know state_path
+    conf.register_cli_opts(vm_config.OPTS)
+    conf.register_opts(impl_unix.unix_opts)
+    conf.set_override('rpc_unix_ipc_dir', conf.svcvm_proxy_dir)
 
 
 def main():
