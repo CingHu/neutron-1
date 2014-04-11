@@ -33,6 +33,7 @@ from oslo.messaging import proxy
 from oslo.messaging import rpc
 
 from neutron.agent.common import config as agent_config
+from neutron.agent.linux import daemon
 from neutron.common import config
 from neutron.common import legacy
 from neutron.common import topics
@@ -255,9 +256,35 @@ class Service(service.Service):
         pass
 
 
+class ProxyDaemon(daemon.Daemon):
+    def __init__(self, conf):
+        self._conf = conf
+        super(ProxyDaemon, self).__init__(conf.pid_file, uuid=conf.port_id)
+
+    def run(self):
+        conf = self._conf
+
+        def server_stop():
+            server.stop()
+        LOG.debug(_('src transport url %s'), conf.src_transport_url)
+        src_transport = messaging.get_transport(
+            conf, conf.src_transport_url,
+            aliases=oslo_service.TRANSPORT_ALIASES)
+        server = Service.create(
+            conf=conf, topic=topics.SERVICEVM_AGENT_NAMEPSACE,
+            manager_=('neutron.vm.agent.namespace_proxy.'
+                      'ServiceVMNamespaceAgent'),
+            src_transport=src_transport, server_stop=server_stop)
+        service.launch(server).wait()
+        src_transport.cleanup()
+
+
 def _register_options(conf):
     cli_opts = [
+        cfg.StrOpt('pid-file', help=_('pid file of this process.')),
+        cfg.StrOpt('port-id', help=_('uuid of port')),
         cfg.StrOpt('src-transport-url', help='src transport url'),
+        cfg.BoolOpt('daemonize', default=True, help=_('Run as daemon'))
     ]
     conf.register_cli_opts(cli_opts)
     agent_config.register_agent_state_opts_helper(conf)
@@ -288,17 +315,11 @@ def main():
     conf.set_override('rpc_unix_ipc_dir', conf.svcvm_proxy_dir)
     utils.log_opt_values(LOG)
 
-    def server_stop():
-        server.stop()
-    LOG.debug(_('src transport url %s'), conf.src_transport_url)
-    src_transport = messaging.get_transport(
-        conf, conf.src_transport_url, aliases=oslo_service.TRANSPORT_ALIASES)
-    server = Service.create(
-        conf=conf, topic=topics.SERVICEVM_AGENT_NAMEPSACE,
-        manager_='neutron.vm.agent.namespace_proxy.ServiceVMNamespaceAgent',
-        src_transport=src_transport, server_stop=server_stop)
-    service.launch(server).wait()
-    src_transport.cleanup()
+    proxy = ProxyDaemon(conf)
+    if conf.daemonize:
+        proxy.start()
+    else:
+        proxy.run()
 
 
 if __name__ == '__main__':
