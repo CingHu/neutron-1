@@ -25,6 +25,7 @@ import eventlet
 import netaddr
 from oslo.config import cfg
 from oslo import messaging
+from oslo.messaging._drivers import impl_unix
 from oslo.messaging import proxy
 from oslo.messaging import rpc
 from oslo.messaging import transport
@@ -47,7 +48,8 @@ from neutron.services.loadbalancer.drivers.haproxy import namespace_driver
 from neutron.vm.agent import config as vm_config
 from neutron.vm.agent import target
 
-
+# _DEBUG = False
+_DEBUG = True
 LOG = logging.getLogger(__name__)
 
 
@@ -211,8 +213,9 @@ class ServiceVMAgent(manager.Manager):
         conf = self.conf
         port_id = port['id']
         path = 'rpc-proxy-%s' % port_id
-        unix_url = 'unix:///%s' % path
+        unix_url = 'punix:///%s' % path
         unix_transport = messaging.get_transport(conf, unix_url)
+        unix_transport._driver.punix_listening.wait()
 
         self._plug(port)
         pm = external_process.ProcessManager(
@@ -221,8 +224,14 @@ class ServiceVMAgent(manager.Manager):
 
         def cmd_callback(pid_file_name):
             cmd = ['neutron-servicevm-ns-rpc-proxy',
+                   '--pid-file=%s' % pid_file_name,
                    '--svcvm-proxy-dir=%s' % conf.svcvm_proxy_dir,
-                   '--src-transport-url', 'punix:///%s' % path]
+                   '--src-transport-url', 'unix:///%s' % path]
+            cmd.extend(agent_config.get_log_args(
+                conf, 'neutron-servicevm-ns-rpc-proxy-%s.log' % port_id))
+            if _DEBUG:
+                cmd += ['--log-file=/tmp/neutron-servicevm-ns-rpc-proxy-'
+                        '%s.log' % port_id]
             return cmd
         pm.enable(cmd_callback)
 
@@ -308,11 +317,8 @@ def _register_options(conf):
     agent_config.register_interface_driver_opts_helper(conf)
     agent_config.register_agent_state_opts_helper(conf)
     agent_config.register_root_helper(conf)
-
-    # NOTE(yamahata): workaround for state_path
-    #                 oslo.messaging doesn't know state_path
     conf.register_opts(vm_config.OPTS)
-    conf.set_override('rpc_unix_ipc_dir', conf.svcvm_proxy_dir)
+    conf.register_opts(impl_unix.unix_opts)
 
 
 def main():
@@ -332,6 +338,9 @@ def main():
     conf(project='neutron')
     config.setup_logging(conf)
     legacy.modernize_quantum_config(conf)
+    # NOTE(yamahata): workaround for state_path
+    #                 oslo.messaging doesn't know state_path
+    conf.set_override('rpc_unix_ipc_dir', conf.svcvm_proxy_dir)
     server = oslo_service.NeutronService.create(
         topic=topics.SERVICEVM_AGENT,
         manager='neutron.vm.agent.agent.ServiceVMAgentWithStateReport',
