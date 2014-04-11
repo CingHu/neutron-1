@@ -188,7 +188,8 @@ class Service(service.Service):
 
     def start(self):
         self.manager.init_host()
-        LOG.debug(_("Creating RPC server for service %s"), self.topic)
+        LOG.debug(_("Creating RPC server for service %s %s"), self.topic,
+                  self.src_transport._driver)
 
         target = messaging.Target(topic=self.topic, server=self.host)
         endpoints = [self.manager]
@@ -261,12 +262,8 @@ def _register_options(conf):
     conf.register_cli_opts(cli_opts)
     agent_config.register_agent_state_opts_helper(conf)
     agent_config.register_root_helper(conf)
-
-    # NOTE(yamahata): workaround for state_path
-    #                 oslo.messaging doesn't know state_path
     conf.register_cli_opts(vm_config.OPTS)
     conf.register_opts(impl_unix.unix_opts)
-    conf.set_override('rpc_unix_ipc_dir', conf.svcvm_proxy_dir)
 
 
 def main():
@@ -286,6 +283,9 @@ def main():
     conf(project='neutron')
     config.setup_logging(conf)
     legacy.modernize_quantum_config(conf)
+    # NOTE(yamahata): workaround for state_path
+    #                 oslo.messaging doesn't know state_path
+    conf.set_override('rpc_unix_ipc_dir', conf.svcvm_proxy_dir)
     utils.log_opt_values(LOG)
 
     def server_stop():
