@@ -24,6 +24,7 @@ import inspect
 
 import eventlet
 from oslo.config import cfg
+from sqlalchemy.orm import exc as orm_exc
 
 from neutron.api.v2 import attributes
 from neutron.common import driver_manager
@@ -595,8 +596,14 @@ class ServiceVMPlugin(vm_db.ServiceResourcePluginDb, ServiceVMMgmtMixin):
     def _delete_service_table_instance(
             self, context, service_table_instance_id,
             mgmt_kwargs, callback, errorback):
-        device, service_instance = self.get_by_service_table_id(
-            context, service_table_instance_id)
+        try:
+            device, service_instance = self.get_by_service_table_id(
+                context, service_table_instance_id)
+        except orm_exc.NoResultFound:
+            # there are no entry for some reason.
+            # e.g. partial creation due to error
+            callback()
+            return
         self._delete_service_instance_pre(context, service_instance['id'],
                                           False)
         self.spawn_n(
