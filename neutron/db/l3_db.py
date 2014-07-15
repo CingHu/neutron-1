@@ -91,6 +91,12 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
     def _core_plugin(self):
         return manager.NeutronManager.get_plugin()
 
+    def _core_plugin_delete_port(self, context, port_id):
+        self._core_plugin._delete_port(context, port_id, l3_port_check=False)
+
+    def _core_plugin__delete_port(self, context, port_id):
+        self._core_plugin._delete_port(context, port_id)
+
     def _get_router(self, context, router_id):
         try:
             router = self._get_by_id(context, Router, router_id)
@@ -246,8 +252,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
                      'name': ''}})
 
         if not gw_port['fixed_ips']:
-            self._core_plugin.delete_port(context.elevated(), gw_port['id'],
-                                          l3_port_check=False)
+            self._core_plugin_delete_port(context.elevated(), gw_port['id'])
             msg = (_('No IPs available for external network %s') %
                    network_id)
             raise n_exc.BadRequest(resource='router', msg=msg)
@@ -280,8 +285,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
                 gw_port_id = router.gw_port['id']
                 router.gw_port = None
                 context.session.add(router)
-            self._core_plugin.delete_port(
-                admin_ctx, gw_port_id, l3_port_check=False)
+            self._core_plugin_delete_port(admin_ctx, gw_port_id)
 
     def _create_gw_port(self, context, router_id, router, new_network):
         new_valid_gw_port_attachment = (
@@ -340,7 +344,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
             ports = self._core_plugin.get_ports(context.elevated(),
                                                 filters=device_filter)
             if ports:
-                self._core_plugin._delete_port(context.elevated(),
+                self._core_plugin__delete_port(context.elevated(),
                                                ports[0]['id'])
 
     def get_router(self, context, id, fields=None):
@@ -502,8 +506,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
         subnet = self._core_plugin._get_subnet(context, port_subnet_id)
         self._confirm_router_interface_not_in_use(
             context, router_id, port_subnet_id)
-        self._core_plugin.delete_port(context, port_db['id'],
-                                      l3_port_check=False)
+        self._core_plugin_delete_port(context, port_db['id'])
         return (port_db, subnet)
 
     def _remove_interface_by_subnet(self, context,
@@ -521,8 +524,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
 
             for p in ports:
                 if p['fixed_ips'][0]['subnet_id'] == subnet_id:
-                    self._core_plugin.delete_port(context, p['id'],
-                                                  l3_port_check=False)
+                    self._core_plugin_delete_port(context, p['id'])
                     return (p, subnet)
         except exc.NoResultFound:
             pass
@@ -783,9 +785,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
         router_id = floatingip['router_id']
         with context.session.begin(subtransactions=True):
             context.session.delete(floatingip)
-            self._core_plugin.delete_port(context.elevated(),
-                                          floatingip['floating_port_id'],
-                                          l3_port_check=False)
+            self._core_plugin_delete_port(context.elevated(),
+                                          floatingip['floating_port_id'])
         return router_id
 
     def delete_floatingip(self, context, id):

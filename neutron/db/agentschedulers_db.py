@@ -57,16 +57,8 @@ class NetworkDhcpAgentBinding(model_base.BASEV2):
                               primary_key=True)
 
 
-class AgentSchedulerDbMixin(agents_db.AgentDbMixin):
+class AgentSchedulerDbOnlyMixin(agents_db.AgentDbMixin):
     """Common class for agent scheduler mixins."""
-
-    # agent notifiers to handle agent update operations;
-    # should be updated by plugins;
-    agent_notifiers = {
-        constants.AGENT_TYPE_DHCP: None,
-        constants.AGENT_TYPE_L3: None,
-        constants.AGENT_TYPE_LOADBALANCER: None,
-    }
 
     @staticmethod
     def is_eligible_agent(active, agent):
@@ -81,11 +73,33 @@ class AgentSchedulerDbMixin(agents_db.AgentDbMixin):
             return not agents_db.AgentDbMixin.is_agent_down(
                 agent['heartbeat_timestamp'])
 
-    def update_agent(self, context, id, agent):
+    def _update_agent(self, context, id, agent):
         original_agent = self.get_agent(context, id)
         result = super(AgentSchedulerDbMixin, self).update_agent(
             context, id, agent)
         agent_data = agent['agent']
+        return result, original_agent, agent_data
+
+    def update_agent(self, context, id, agent):
+        result, _original_agent, _agent_data = self._update_agent(context,
+                                                                  id, agent)
+        return result
+
+
+class AgentSchedulerDbMixin(AgentSchedulerDbOnlyMixin):
+    """Common class for agent scheduler mixins."""
+
+    # agent notifiers to handle agent update operations;
+    # should be updated by plugins;
+    agent_notifiers = {
+        constants.AGENT_TYPE_DHCP: None,
+        constants.AGENT_TYPE_L3: None,
+        constants.AGENT_TYPE_LOADBALANCER: None,
+    }
+
+    def update_agent(self, context, id, agent):
+        result, original_agent, agent_data = self._update_agent(context,
+                                                                id, agent)
         agent_notifier = self.agent_notifiers.get(original_agent['agent_type'])
         if (agent_notifier and
             'admin_state_up' in agent_data and

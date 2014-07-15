@@ -65,8 +65,9 @@ class RouterL3AgentBinding(model_base.BASEV2):
                             primary_key=True)
 
 
-class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
-                              agentschedulers_db.AgentSchedulerDbMixin):
+class L3AgentSchedulerDbOnlyMixin(
+        l3agentscheduler.L3AgentSchedulerPluginBase,
+        agentschedulers_db.AgentSchedulerDbOnlyMixin):
     """Mixin class to add l3 agent scheduler extension to plugins
     using the l3 agent for routing.
     """
@@ -122,8 +123,7 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
                       'dead_time': agent_dead_limit})
             self.reschedule_router(context, binding.router_id)
 
-    def add_router_to_l3_agent(self, context, agent_id, router_id):
-        """Add a l3 agent to host a router."""
+    def _add_router_to_l3_agent(self, context, agent_id, router_id):
         router = self.get_router(context, router_id)
         distributed = router.get('distributed')
         with context.session.begin(subtransactions=True):
@@ -166,24 +166,11 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
             if not result:
                 raise l3agentscheduler.RouterSchedulingFailed(
                     router_id=router_id, agent_id=agent_id)
+        return agent_db
 
-        l3_notifier = self.agent_notifiers.get(constants.AGENT_TYPE_L3)
-        if l3_notifier:
-            l3_notifier.router_added_to_agent(
-                context, [router_id], agent_db.host)
-
-    def remove_router_from_l3_agent(self, context, agent_id, router_id):
-        """Remove the router from l3 agent.
-
-        After removal, the router will be non-hosted until there is update
-        which leads to re-schedule or be added to another agent manually.
-        """
-        agent = self._get_agent(context, agent_id)
-        self._unbind_router(context, router_id, agent_id)
-        l3_notifier = self.agent_notifiers.get(constants.AGENT_TYPE_L3)
-        if l3_notifier:
-            l3_notifier.router_removed_from_agent(
-                context, router_id, agent.host)
+    def add_router_to_l3_agent(self, context, agent_id, router_id):
+        """Add a l3 agent to host a router."""
+        self._add_router_to_l3_agent(context, agent_id, router_id)
 
     def _unbind_router(self, context, router_id, agent_id):
         with context.session.begin(subtransactions=True):
@@ -198,12 +185,15 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
                     router_id=router_id, agent_id=agent_id)
             context.session.delete(binding)
 
-    def reschedule_router(self, context, router_id, candidates=None):
-        """Reschedule router to a new l3 agent
+    def remove_router_from_l3_agent(self, context, agent_id, router_id):
+        """Remove the router from l3 agent.
 
-        Remove the router from the agent(s) currently hosting it and
-        schedule it again
+        After removal, the router will be non-hosted until there is update
+        which leads to re-schedule or be added to another agent manually.
         """
+        self._unbind_router(context, router_id, agent_id)
+
+    def _reschedule_router(self, context, router_id, candidates):
         cur_agents = self.list_l3_agents_hosting_router(
             context, router_id)['agents']
         with context.session.begin(subtransactions=True):
@@ -215,14 +205,15 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
             if not new_agent:
                 raise l3agentscheduler.RouterReschedulingFailed(
                     router_id=router_id)
+        return cur_agents, new_agent
 
-        l3_notifier = self.agent_notifiers.get(constants.AGENT_TYPE_L3)
-        if l3_notifier:
-            for agent in cur_agents:
-                l3_notifier.router_removed_from_agent(
-                    context, router_id, agent['host'])
-            l3_notifier.router_added_to_agent(
-                context, [router_id], new_agent.host)
+    def reschedule_router(self, context, router_id, candidates=None):
+        """Reschedule router to a new l3 agent
+
+        Remove the router from the agent(s) currently hosting it and
+        schedule it again
+        """
+        self._reschedule_router(context, router_id, candidates)
 
     def list_routers_on_l3_agent(self, context, agent_id):
         query = context.session.query(RouterL3AgentBinding.router_id)
@@ -427,3 +418,47 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
                 RouterL3AgentBinding.l3_agent_id).order_by('count')
         res = query.filter(agents_db.Agent.id.in_(agent_ids)).first()
         return res[0]
+
+
+class L3AgentSchedulerDbMixin(L3AgentSchedulerDbOnlyMixin,
+                              agentschedulers_db.AgentSchedulerDbMixin):
+    """Mixin class to add l3 agent scheduler extension to plugins
+    using the l3 agent for routing.
+    """
+
+    def add_router_to_l3_agent(self, context, agent_id, router_id):
+        """Add a l3 agent to host a router."""
+        agent_db = self._add_router_to_l3_agent(context, agent_id, router_id)
+        l3_notifier = self.agent_notifiers.get(constants.AGENT_TYPE_L3)
+        if l3_notifier:
+            l3_notifier.router_added_to_agent(
+                context, [router_id], agent_db.host)
+
+    def remove_router_from_l3_agent(self, context, agent_id, router_id):
+        """Remove the router from l3 agent.
+
+        After removal, the router will be non-hosted until there is update
+        which leads to re-schedule or be added to another agent manually.
+        """
+        agent = self._get_agent(context, agent_id)
+        self._unbind_router(context, router_id, agent_id)
+        l3_notifier = self.agent_notifiers.get(constants.AGENT_TYPE_L3)
+        if l3_notifier:
+            l3_notifier.router_removed_from_agent(
+                context, router_id, agent.host)
+
+    def reschedule_router(self, context, router_id, candidates=None):
+        """Reschedule router to a new l3 agent
+
+        Remove the router from the agent(s) currently hosting it and
+        schedule it again
+        """
+        cur_agents, new_agent = self._reschedule_router(
+            context, router_id, candidates)
+        l3_notifier = self.agent_notifiers.get(constants.AGENT_TYPE_L3)
+        if l3_notifier:
+            for agent in cur_agents:
+                l3_notifier.router_removed_from_agent(
+                    context, router_id, agent['host'])
+            l3_notifier.router_added_to_agent(
+                context, [router_id], new_agent.host)

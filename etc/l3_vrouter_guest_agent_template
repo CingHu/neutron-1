@@ -1,0 +1,303 @@
+[DEFAULT]
+# Print more verbose output (set logging level to INFO instead of default WARNING level).
+# verbose = False
+
+# Show debugging output in log (sets DEBUG log level output)
+# debug = False
+
+# L3 requires that an interface driver be set. Choose the one that best
+# matches your plugin.
+# interface_driver =
+
+# Example of interface_driver option for OVS based plugins (OVS, Ryu, NEC)
+# that supports L3 agent
+# interface_driver = neutron.agent.linux.interface.OVSInterfaceDriver
+
+# Use veth for an OVS interface or not.
+# Support kernels with limited namespace support
+# (e.g. RHEL 6.5) so long as ovs_use_veth is set to True.
+# ovs_use_veth = False
+
+# Example of interface_driver option for LinuxBridge
+# interface_driver = neutron.agent.linux.interface.BridgeInterfaceDriver
+
+# Allow overlapping IP (Must have kernel build with CONFIG_NET_NS=y and
+# iproute2 package that supports namespaces).
+# use_namespaces = True
+
+# If use_namespaces is set as False then the agent can only configure one router.
+
+# This is done by setting the specific router_id.
+# router_id =
+
+# When external_network_bridge is set, each L3 agent can be associated
+# with no more than one external network. This value should be set to the UUID
+# of that external network. To allow L3 agent support multiple external
+# networks, both the external_network_bridge and gateway_external_network_id
+# must be left empty.
+# gateway_external_network_id =
+
+# Indicates that this L3 agent should also handle routers that do not have
+# an external network gateway configured.  This option should be True only
+# for a single agent in a Neutron deployment, and may be False for all agents
+# if all routers must have an external network gateway
+# handle_internal_only_routers = True
+
+# Name of bridge used for external network traffic. This should be set to
+# empty value for the linux bridge. when this parameter is set, each L3 agent
+# can be associated with no more than one external network.
+# external_network_bridge = br-ex
+
+# Send this many gratuitous ARPs for HA setup. Set it below or equal to 0
+# to disable this feature.
+# send_arp_for_ha = 3
+
+# seconds between re-sync routers' data if needed
+# periodic_interval = 40
+
+# seconds to start to sync routers' data after
+# starting agent
+# periodic_fuzzy_delay = 5
+
+# Timeout for ovs-vsctl commands.
+# If the timeout expires, ovs commands will fail with ALARMCLOCK error.
+# ovs_vsctl_timeout = 10
+
+# Where to store Neutron state files.  This directory must be writable by the
+# user executing the agent.
+# state_path = /var/lib/neutron
+
+# Where to store lock files
+lock_path = $state_path/lock
+
+# log_format = %(asctime)s %(levelname)8s [%(name)s] %(message)s
+# log_date_format = %Y-%m-%d %H:%M:%S
+
+# use_syslog                           -> syslog
+# log_file and log_dir                 -> log_dir/log_file
+# (not log_file) and log_dir           -> log_dir/{binary_name}.log
+# use_stderr                           -> stderr
+# (not user_stderr) and (not log_file) -> stdout
+# publish_errors                       -> notification system
+
+# use_syslog = False
+# syslog_log_facility = LOG_USER
+
+# use_stderr = True
+# log_file =
+# log_dir =
+
+# publish_errors = False
+
+#
+# Options defined in oslo.messaging
+#
+
+# Use durable queues in amqp. (boolean value)
+# Deprecated group/name - [DEFAULT]/rabbit_durable_queues
+#amqp_durable_queues=false
+
+# Auto-delete queues in amqp. (boolean value)
+#amqp_auto_delete=false
+
+# Size of RPC connection pool. (integer value)
+#rpc_conn_pool_size=30
+
+# Qpid broker hostname. (string value)
+#qpid_hostname=localhost
+
+# Qpid broker port. (integer value)
+#qpid_port=5672
+
+# Qpid HA cluster host:port pairs. (list value)
+#qpid_hosts=$qpid_hostname:$qpid_port
+
+# Username for Qpid connection. (string value)
+#qpid_username=
+
+# Password for Qpid connection. (string value)
+#qpid_password=
+
+# Space separated list of SASL mechanisms to use for auth.
+# (string value)
+#qpid_sasl_mechanisms=
+
+# Seconds between connection keepalive heartbeats. (integer
+# value)
+#qpid_heartbeat=60
+
+# Transport to use, either 'tcp' or 'ssl'. (string value)
+#qpid_protocol=tcp
+
+# Whether to disable the Nagle algorithm. (boolean value)
+#qpid_tcp_nodelay=true
+
+# The qpid topology version to use.  Version 1 is what was
+# originally used by impl_qpid.  Version 2 includes some
+# backwards-incompatible changes that allow broker federation
+# to work.  Users should update to version 2 when they are
+# able to take everything down, as it requires a clean break.
+# (integer value)
+#qpid_topology_version=1
+
+# SSL version to use (valid only if SSL enabled). valid values
+# are TLSv1, SSLv23 and SSLv3. SSLv2 may be available on some
+# distributions. (string value)
+#kombu_ssl_version=
+
+# SSL key file (valid only if SSL enabled). (string value)
+#kombu_ssl_keyfile=
+
+# SSL cert file (valid only if SSL enabled). (string value)
+#kombu_ssl_certfile=
+
+# SSL certification authority file (valid only if SSL
+# enabled). (string value)
+#kombu_ssl_ca_certs=
+
+# How long to wait before reconnecting in response to an AMQP
+# consumer cancel notification. (floating point value)
+#kombu_reconnect_delay=1.0
+
+# The RabbitMQ broker address where a single node is used.
+# (string value)
+#rabbit_host=localhost
+
+# The RabbitMQ broker port where a single node is used.
+# (integer value)
+#rabbit_port=5672
+
+# RabbitMQ HA cluster host:port pairs. (list value)
+#rabbit_hosts=$rabbit_host:$rabbit_port
+
+# Connect over SSL for RabbitMQ. (boolean value)
+#rabbit_use_ssl=false
+
+# The RabbitMQ userid. (string value)
+#rabbit_userid=guest
+
+# The RabbitMQ password. (string value)
+#rabbit_password=guest
+
+# the RabbitMQ login method (string value)
+#rabbit_login_method=AMQPLAIN
+
+# The RabbitMQ virtual host. (string value)
+#rabbit_virtual_host=/
+
+# How frequently to retry connecting with RabbitMQ. (integer
+# value)
+#rabbit_retry_interval=1
+
+# How long to backoff for between retries when connecting to
+# RabbitMQ. (integer value)
+#rabbit_retry_backoff=2
+
+# Maximum number of RabbitMQ connection retries. Default is 0
+# (infinite retry count). (integer value)
+#rabbit_max_retries=0
+
+# Use HA queues in RabbitMQ (x-ha-policy: all). If you change
+# this option, you must wipe the RabbitMQ database. (boolean
+# value)
+#rabbit_ha_queues=false
+
+# If passed, use a fake RabbitMQ provider. (boolean value)
+#fake_rabbit=false
+
+# ZeroMQ bind address. Should be a wildcard (*), an ethernet
+# interface, or IP. The "host" option should point or resolve
+# to this address. (string value)
+#rpc_zmq_bind_address=*
+
+# MatchMaker driver. (string value)
+#rpc_zmq_matchmaker=oslo.messaging._drivers.matchmaker.MatchMakerLocalhost
+
+# ZeroMQ receiver listening port. (integer value)
+#rpc_zmq_port=9501
+
+# Number of ZeroMQ contexts, defaults to 1. (integer value)
+#rpc_zmq_contexts=1
+
+# Maximum number of ingress messages to locally buffer per
+# topic. Default is unlimited. (integer value)
+#rpc_zmq_topic_backlog=<None>
+
+# Directory for holding IPC sockets. (string value)
+#rpc_zmq_ipc_dir=/var/run/openstack
+
+# Name of this node. Must be a valid hostname, FQDN, or IP
+# address. Must match "host" option, if running Nova. (string
+# value)
+#rpc_zmq_host=oslo
+
+# Seconds to wait before a cast expires (TTL). Only supported
+# by impl_zmq. (integer value)
+#rpc_cast_timeout=30
+
+# Heartbeat frequency. (integer value)
+#matchmaker_heartbeat_freq=300
+
+# Heartbeat time-to-live. (integer value)
+#matchmaker_heartbeat_ttl=600
+
+# Size of RPC greenthread pool. (integer value)
+#rpc_thread_pool_size=64
+
+# Driver or drivers to handle sending notifications. (multi
+# valued)
+#notification_driver=
+
+# AMQP topic used for OpenStack notifications. (list value)
+# Deprecated group/name - [rpc_notifier2]/topics
+#notification_topics=notifications
+
+# Seconds to wait for a response from a call. (integer value)
+#rpc_response_timeout=60
+
+# A URL representing the messaging driver to use and its full
+# configuration. If not set, we fall back to the rpc_backend
+# option and driver specific configuration. (string value)
+#transport_url=<None>
+
+# The messaging driver to use, defaults to rabbit. Other
+# drivers include qpid and zmq. (string value)
+#rpc_backend=rabbit
+
+# The default exchange under which topics are scoped. May be
+# overridden by an exchange name specified in the
+# transport_url option. (string value)
+#control_exchange=openstack
+
+
+[matchmaker_redis]
+
+#
+# Options defined in oslo.messaging
+#
+
+# Host to locate redis. (string value)
+#host=127.0.0.1
+
+# Use this port to connect to redis host. (integer value)
+#port=6379
+
+# Password for Redis server (optional). (string value)
+#password=<None>
+
+
+[matchmaker_ring]
+
+#
+# Options defined in oslo.messaging
+#
+
+# Matchmaker ring file (JSON). (string value)
+# Deprecated group/name - [DEFAULT]/matchmaker_ringfile
+#ringfile=/etc/oslo/matchmaker_ring.json
+
+[agent]
+# Use "sudo neutron-rootwrap /etc/neutron/rootwrap.conf" to use the real
+# root filter facility.
+# Change to "sudo" to skip the filtering and just run the comand directly
+# root_helper = sudo

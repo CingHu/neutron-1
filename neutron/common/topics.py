@@ -36,6 +36,9 @@ L3_AGENT = 'l3_agent'
 DHCP_AGENT = 'dhcp_agent'
 METERING_AGENT = 'metering_agent'
 LOADBALANCER_AGENT = 'n-lbaas_agent'
+CONFIG_AGENT = 'config_agent'
+GUEST_L3_AGENT = 'guest_l3_agent'
+CFG_AGENT_L3_ROUTING = 'config_agent_l3_routing'
 
 
 def get_topic_name(prefix, table, operation, host=None):
